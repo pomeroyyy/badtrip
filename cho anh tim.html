@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Trang tỏ tình</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#ff4d6d;--muted:#9aa6b2}
+    *{box-sizing:border-box}
+    body{min-height:100vh;display:grid;place-items:center;margin:0;background:linear-gradient(135deg,#071021 0%, #0b1530 100%);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    .card{width:min(720px,92vw);background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:18px;padding:34px;box-shadow:0 10px 30px rgba(2,6,23,0.6);color:#e6eef6;text-align:center}
+    h1{margin:0 0 6px;font-size:28px}
+    p.lead{color:var(--muted);margin:0 0 22px}
+
+    .buttons{position:relative;height:160px;display:flex;align-items:center;justify-content:center;gap:20px}
+    .btn{--size:120px;cursor:pointer;border-radius:14px;padding:14px 20px;font-size:18px;border:2px solid rgba(255,255,255,0.06);min-width:140px;display:inline-flex;align-items:center;justify-content:center;user-select:none;transition:transform .18s ease,box-shadow .18s ease}
+    .btn:active{transform:scale(.96)}
+
+    .yes{background:linear-gradient(180deg,#ffd3e0,#ff8aa2);color:#2b0520;font-weight:700;box-shadow:0 10px 20px rgba(255,75,110,0.14)}
+    .no{position:absolute;left:calc(50% + 90px);top:50%;transform:translate(-50%,-50%);background:transparent;color:#e6eef6;border:2px dashed rgba(255,255,255,0.06);min-width:120px}
+
+    .hint{font-size:13px;color:var(--muted);margin-top:14px}
+
+    /* small modal */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(0,0,0,0.45),rgba(0,0,0,0.6));}
+    .modal .sheet{background:white;color:#111;border-radius:12px;padding:22px;max-width:420px;text-align:center}
+    .close{margin-top:12px;padding:8px 12px;border-radius:8px;border:none;background:#111;color:#fff;cursor:pointer}
+
+    @media (max-width:480px){
+      .buttons{height:200px}
+      .btn{min-width:110px;font-size:16px}
+      .no{left:calc(50% + 70px)}
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Em có yêu anh không?</h1>
+    <p class="lead">Nhấn "Có" nếu em đồng ý... còn "Không" thì... cố gắng bắt nó nhé 😏</p>
+
+    <div class="buttons" id="stage">
+      <button class="btn yes" id="yesBtn">Có ❤️</button>
+      <button class="btn no" id="noBtn">Không</button>
+    </div>
+
+    <div class="hint">Di chuột vào nút "Không" xem nó chạy đi đâu 😉</div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="sheet">
+      <h2>Yay! 🎉</h2>
+      <p id="modalText">Cảm ơn bạn đã đồng ý. Mình sẽ trân trọng điều đó.</p>
+      <button class="close" id="closeBtn">Đóng</button>
+    </div>
+  </div>
+
+  <script>
+    // Lấy phần tử
+    const stage = document.getElementById('stage');
+    const noBtn = document.getElementById('noBtn');
+    const yesBtn = document.getElementById('yesBtn');
+    const modal = document.getElementById('modal');
+    const closeBtn = document.getElementById('closeBtn');
+
+    // Đảm bảo 'no' có position absolute để dịch chuyển
+    noBtn.style.transition = 'left 0.22s cubic-bezier(.2,.8,.2,1), top 0.22s cubic-bezier(.2,.8,.2,1)';
+
+    function moveNoRandomly() {
+      const stageRect = stage.getBoundingClientRect();
+      const btnRect = noBtn.getBoundingClientRect();
+
+      // tính giới hạn (padding nhỏ để không bị tràn)
+      const padding = 8;
+      const maxX = stageRect.width - btnRect.width - padding;
+      const maxY = stageRect.height - btnRect.height - padding;
+
+      // Nếu stage quá nhỏ, đặt về vị trí trung tâm
+      if (maxX <= 0 || maxY <= 0) {
+        noBtn.style.left = '50%';
+        noBtn.style.top = '50%';
+        noBtn.style.transform = 'translate(-50%,-50%)';
+        return;
+      }
+
+      // chọn vị trí ngẫu nhiên trong stage
+      const newLeft = Math.floor(Math.random() * maxX) + padding;
+      const newTop = Math.floor(Math.random() * maxY) + padding;
+
+      // loại bỏ transform translate khi dùng left/top tuyệt đối
+      noBtn.style.transform = 'translate(0,0)';
+      noBtn.style.left = newLeft + 'px';
+      noBtn.style.top = newTop + 'px';
+    }
+
+    // Di chuột vào => dịch chuyển
+    noBtn.addEventListener('mouseenter', moveNoRandomly);
+    // Còn nếu dùng touch (mobile), dịch chuyển khi chạm
+    noBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveNoRandomly(); });
+
+    // Nếu người dùng click 'Có' — hiển thị modal
+    yesBtn.addEventListener('click', () => {
+      modal.style.display = 'flex';
+    });
+
+    closeBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+
+    // Nếu ai đó kiên nhẫn nhấn vào 'Không' (rất khó), ta cho nó 1 phản hồi tinh nghịch
+    noBtn.addEventListener('click', () => {
+      // di chuyển ngay lập tức cho 'không' để trêu
+      moveNoRandomly();
+    });
+
+    // Khi cửa sổ thay đổi kích thước, reset vị trí ban đầu của 'Không' để tránh ra ngoài
+    window.addEventListener('resize', () => {
+      // đặt lại về giữa
+      noBtn.style.left = 'calc(50% + 90px)';
+      noBtn.style.top = '50%';
+      noBtn.style.transform = 'translate(-50%,-50%)';
+    });
+
+    // Khởi tạo: đặt nút 'Không' vào vị trí bắt đầu đúng sau khi DOM đã ổn
+    window.addEventListener('load', () => {
+      noBtn.style.left = 'calc(50% + 90px)';
+      noBtn.style.top = '50%';
+      noBtn.style.transform = 'translate(-50%,-50%)';
+    });
+  </script>
+</body>
+</html>
